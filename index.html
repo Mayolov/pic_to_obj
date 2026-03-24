@@ -28,21 +28,48 @@
 
 <body>
 
-  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <header>
-    <h1>Photo → 3D Mesh</h1>
-    <p class="subtitle">
-      Upload a photo or use your camera — the app estimates depth and builds a
-      downloadable 3D mesh (OBJ &amp; GLB) ready for Blender or OpenGL.
-    </p>
-    <div class="note">
-      ⚠ <strong>Limitation:</strong> This uses AI depth estimation, not full photogrammetry.
-      The result is a <em>depth-displaced plane mesh</em> — single-sided, best for objects
-      photographed head-on with good lighting and a plain background.
+    <div class="header-inner">
+      <h1><span class="logo">☕</span> Photo → 3D Mesh</h1>
+      <p class="subtitle">
+        Snap or upload a photo of any object and receive a downloadable
+        3D mesh — OBJ &amp; GLB — ready for Blender, OpenGL, or 3D printing.
+      </p>
     </div>
   </header>
 
-  <!-- ── Input controls ─────────────────────────────────────────────────── -->
+  <!-- ── How it works ─────────────────────────────────────────────────────── -->
+  <section class="workflow" aria-label="How it works">
+
+    <div class="step-card">
+      <div class="step-visual step-photo"></div>
+      <span class="step-num">1</span>
+      <strong>Take a photo</strong>
+      <p>Plain background, good lighting, object centred and in focus</p>
+    </div>
+
+    <div class="step-arrow" aria-hidden="true">›</div>
+
+    <div class="step-card">
+      <div class="step-visual step-depth"></div>
+      <span class="step-num">2</span>
+      <strong>AI reads depth</strong>
+      <p>TensorFlow.js estimates per-pixel distance to build a depth map</p>
+    </div>
+
+    <div class="step-arrow" aria-hidden="true">›</div>
+
+    <div class="step-card">
+      <div class="step-visual step-mesh"></div>
+      <span class="step-num">3</span>
+      <strong>Get your 3D file</strong>
+      <p>Download OBJ or GLB and open it straight in Blender or OpenGL</p>
+    </div>
+
+  </section>
+
+  <!-- ── Input controls ───────────────────────────────────────────────────── -->
   <div class="controls">
     <label class="btn btn-upload disabled" id="upload-label">
       📷 Upload Photo
@@ -51,25 +78,34 @@
     <button class="btn btn-camera" id="cam-btn" disabled>🎥 Use Camera</button>
   </div>
 
-  <!-- ── Status bar ─────────────────────────────────────────────────────── -->
+  <!-- ── Status bar ───────────────────────────────────────────────────────── -->
   <div id="status" class="busy">
     <span class="spinner" id="spinner"></span>
     <span id="status-text">Loading depth model…</span>
   </div>
 
-  <!-- ── 3-D viewer ──────────────────────────────────────────────────────── -->
+  <!-- ── 3-D viewer ───────────────────────────────────────────────────────── -->
   <div class="viewer-wrap">
     <canvas id="viewer"></canvas>
+    <!-- Badge swaps text when the demo is replaced by a real mesh -->
+    <div class="viewer-badge" id="viewer-badge">Demo — drag to explore · upload a photo to start</div>
     <div class="orbit-hint" id="orbit-hint">Drag to rotate · Scroll to zoom</div>
   </div>
 
-  <!-- ── Download buttons ───────────────────────────────────────────────── -->
+  <!-- ── Limitation note ──────────────────────────────────────────────────── -->
+  <p class="note">
+    ⚠ <strong>Heads up:</strong> this uses AI depth estimation, not full photogrammetry.
+    The output is a <em>depth-displaced plane mesh</em> — single-sided and best for objects
+    photographed straight-on. For highest quality, use a plain background and even lighting.
+  </p>
+
+  <!-- ── Download buttons ─────────────────────────────────────────────────── -->
   <div class="dl-row">
     <button class="btn btn-dl" id="dl-obj" disabled>⬇ Download OBJ</button>
     <button class="btn btn-dl" id="dl-glb" disabled>⬇ Download GLB</button>
   </div>
 
-  <!-- ── Camera capture modal ───────────────────────────────────────────── -->
+  <!-- ── Camera capture modal ─────────────────────────────────────────────── -->
   <div id="cam-modal">
     <video id="cam-video" autoplay playsinline muted></video>
     <div class="cam-btns">

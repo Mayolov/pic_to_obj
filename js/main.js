@@ -3,22 +3,19 @@
  * Application entry point.
  *
  * Responsibilities:
- *  - Boot: initialise Three.js viewer and load the depth model.
- *  - State: hold references to the active estimator and current mesh.
+ *  - Boot: initialise Three.js viewer, load depth model, show demo object.
+ *  - State: hold references to the active estimator, demo mesh, and current mesh.
  *  - Orchestration: wire UI events to the depth → mesh → export pipeline.
  *  - Status: provide a single setStatus() helper consumed throughout the flow.
- *
- * This module intentionally contains no domain logic; all heavy lifting is
- * delegated to the specialised modules below.
  */
 
-import { initThree }                     from './viewer.js';
-import { loadModel, estimateDepth }      from './depth.js';
-import { buildMesh, disposeMesh }        from './mesh.js';
-import { downloadOBJ, downloadGLB }      from './export.js';
-import { initCamera }                    from './camera.js';
+import { initThree, createDemoMesh }     from './viewer.js';
+import { loadModel, estimateDepth }       from './depth.js';
+import { buildMesh, disposeMesh }         from './mesh.js';
+import { downloadOBJ, downloadGLB }       from './export.js';
+import { initCamera }                     from './camera.js';
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 const uploadLabel  = document.getElementById('upload-label');
 const fileInput    = document.getElementById('file-input');
 const camBtn       = document.getElementById('cam-btn');
@@ -34,16 +31,30 @@ const statusEl     = document.getElementById('status');
 const statusText   = document.getElementById('status-text');
 const spinner      = document.getElementById('spinner');
 const orbitHint    = document.getElementById('orbit-hint');
-
-// ── App state ─────────────────────────────────────────────────────────────────
-let estimator   = null;   // TF.js depth estimator (null → luminance fallback)
-let currentMesh = null;   // active Three.js Mesh
+const viewerBadge  = document.getElementById('viewer-badge');
 
 // ── Three.js ──────────────────────────────────────────────────────────────────
-const { scene, camera, controls } = initThree(
+const { scene, camera, controls, ticks } = initThree(
   viewerCanvas,
   viewerCanvas.parentElement,
 );
+
+// ── Demo mesh ─────────────────────────────────────────────────────────────────
+// Pre-populate the viewer with a rotating torus knot so users can immediately
+// see the orbit controls working before they upload any photo.
+const demoMesh = createDemoMesh();
+scene.add(demoMesh);
+orbitHint.classList.add('show');   // show hint for the demo too
+
+ticks.push(() => {
+  if (!demoMesh.parent) return;   // already removed — stop rotating
+  demoMesh.rotation.x += 0.003;
+  demoMesh.rotation.y += 0.006;
+});
+
+// ── App state ─────────────────────────────────────────────────────────────────
+let estimator   = null;   // TF.js depth estimator (null → luminance fallback)
+let currentMesh = null;   // active user mesh
 
 // ── Camera capture ────────────────────────────────────────────────────────────
 initCamera({
@@ -69,7 +80,7 @@ fileInput.addEventListener('change', (e) => {
   fileInput.value = '';   // allow re-selecting the same file
 });
 
-// ── Download ──────────────────────────────────────────────────────────────────
+// ── Downloads ─────────────────────────────────────────────────────────────────
 dlObjBtn.addEventListener('click', () => {
   if (currentMesh) downloadOBJ(currentMesh);
 });
@@ -86,31 +97,38 @@ dlGlbBtn.addEventListener('click', () => {
 
 /**
  * Full photo-to-mesh pipeline for a single image element.
- * Runs: depth estimation → mesh build → enable downloads.
  *
  * @param {HTMLImageElement} imgEl
  */
 async function processImage(imgEl) {
-  // Ensure the image is fully decoded before processing
   if (!imgEl.complete || !imgEl.naturalWidth) {
     await new Promise((res) => { imgEl.onload = res; });
   }
 
   setStatus('Estimating depth…', 'busy');
   setDownloadsEnabled(false);
-  orbitHint.classList.remove('show');
 
   try {
     const depthResult = await estimateDepth(estimator, imgEl, procCanvas);
 
     setStatus('Building mesh…', 'busy');
 
-    // Dispose the previous mesh before creating a new one
+    // Remove the demo object the first time a real photo is processed
+    if (demoMesh.parent) {
+      scene.remove(demoMesh);
+      demoMesh.geometry.dispose();
+      demoMesh.material.dispose();
+    }
+
+    // Swap out the previous user mesh
     disposeMesh(currentMesh, scene);
     currentMesh = buildMesh({ depthResult, imgEl, scene, camera, controls });
 
     setStatus('Done! Drag to rotate, scroll to zoom.', 'ready');
     setDownloadsEnabled(true);
+
+    // Update the viewer badge to reflect a real mesh is now showing
+    viewerBadge.textContent = 'Your 3D mesh — drag to rotate · scroll to zoom';
     orbitHint.classList.add('show');
   } catch (err) {
     setStatus('Error: ' + err.message, 'err');
@@ -139,9 +157,9 @@ loadModel()
 // ── UI helpers ────────────────────────────────────────────────────────────────
 
 function setStatus(msg, type = 'busy') {
-  statusText.textContent   = msg;
-  statusEl.className       = type;
-  spinner.style.display    = (type === 'busy') ? '' : 'none';
+  statusText.textContent = msg;
+  statusEl.className     = type;
+  spinner.style.display  = (type === 'busy') ? '' : 'none';
 }
 
 function setInputsEnabled(enabled) {
