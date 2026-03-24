@@ -171,3 +171,4 @@ function setDownloadsEnabled(enabled) {
   dlObjBtn.disabled = !enabled;
   dlGlbBtn.disabled = !enabled;
 }
+ 
