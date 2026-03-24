@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo → 3D Mesh</title>
+
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- TensorFlow.js core -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <!-- Depth-estimation model (exposes window.depthEstimation) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/depth-estimation@0.0.3/dist/depth-estimation.min.js"></script>
+
+  <!--
+    Three.js importmap — resolves bare specifiers used in js/*.js modules.
+    Must appear before any <script type="module">.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three":         "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <h1>Photo → 3D Mesh</h1>
+    <p class="subtitle">
+      Upload a photo or use your camera — the app estimates depth and builds a
+      downloadable 3D mesh (OBJ &amp; GLB) ready for Blender or OpenGL.
+    </p>
+    <div class="note">
+      ⚠ <strong>Limitation:</strong> This uses AI depth estimation, not full photogrammetry.
+      The result is a <em>depth-displaced plane mesh</em> — single-sided, best for objects
+      photographed head-on with good lighting and a plain background.
+    </div>
+  </header>
+
+  <!-- ── Input controls ─────────────────────────────────────────────────── -->
+  <div class="controls">
+    <label class="btn btn-upload disabled" id="upload-label">
+      📷 Upload Photo
+      <input type="file" id="file-input" accept="image/*">
+    </label>
+    <button class="btn btn-camera" id="cam-btn" disabled>🎥 Use Camera</button>
+  </div>
+
+  <!-- ── Status bar ─────────────────────────────────────────────────────── -->
+  <div id="status" class="busy">
+    <span class="spinner" id="spinner"></span>
+    <span id="status-text">Loading depth model…</span>
+  </div>
+
+  <!-- ── 3-D viewer ──────────────────────────────────────────────────────── -->
+  <div class="viewer-wrap">
+    <canvas id="viewer"></canvas>
+    <div class="orbit-hint" id="orbit-hint">Drag to rotate · Scroll to zoom</div>
+  </div>
+
+  <!-- ── Download buttons ───────────────────────────────────────────────── -->
+  <div class="dl-row">
+    <button class="btn btn-dl" id="dl-obj" disabled>⬇ Download OBJ</button>
+    <button class="btn btn-dl" id="dl-glb" disabled>⬇ Download GLB</button>
+  </div>
+
+  <!-- ── Camera capture modal ───────────────────────────────────────────── -->
+  <div id="cam-modal">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-btns">
+      <button class="btn btn-cancel-cam" id="cancel-cam">Cancel</button>
+      <button class="btn-shutter" id="shutter" title="Capture">&#9679;</button>
+    </div>
+  </div>
+
+  <!-- Off-screen canvas used by depth.js for image processing -->
+  <canvas id="proc-canvas"></canvas>
+
+  <!-- Entry point — deferred until DOM + CDN scripts are ready -->
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
