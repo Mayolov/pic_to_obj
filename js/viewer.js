@@ -27,7 +27,8 @@ export function initThree(canvas, wrapEl) {
 
   // ── Scene ──────────────────────────────────────────────────────────────────
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x241508);   // matches --surface token
+  scene.background = new THREE.Color(0x17130F);   // matches --surface-1 token
+  scene.fog = new THREE.FogExp2(0x17130F, 0.12);  // subtle depth fog
 
   // ── Camera ─────────────────────────────────────────────────────────────────
   const camera = new THREE.PerspectiveCamera(48, W / H, 0.01, 200);
@@ -55,6 +56,12 @@ export function initThree(canvas, wrapEl) {
   const fillLight = new THREE.DirectionalLight(0x8B6030, 0.5);
   fillLight.position.set(-2, -1, -1);
   scene.add(fillLight);
+
+  // ── Grid floor ────────────────────────────────────────────────────────────
+  // Warm subtle grid to ground objects and reinforce the 3-D space.
+  const grid = new THREE.GridHelper(12, 18, 0x342B20, 0x211B14);
+  grid.position.y = -1.4;
+  scene.add(grid);
 
   // ── Per-frame tick callbacks ────────────────────────────────────────────────
   const ticks = [];

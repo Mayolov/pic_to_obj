@@ -7,15 +7,9 @@
 
   <link rel="stylesheet" href="css/styles.css">
 
-  <!-- TensorFlow.js core -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-  <!-- Depth-estimation model (exposes window.depthEstimation) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/depth-estimation@0.0.3/dist/depth-estimation.min.js"></script>
 
-  <!--
-    Three.js importmap — resolves bare specifiers used in js/*.js modules.
-    Must appear before any <script type="module">.
-  -->
   <script type="importmap">
   {
     "imports": {
@@ -28,84 +22,201 @@
 
 <body>
 
-  <!-- ── Header ──────────────────────────────────────────────────────────── -->
-  <header>
-    <div class="header-inner">
-      <h1><span class="logo">☕</span> Photo → 3D Mesh</h1>
-      <p class="subtitle">
-        Snap or upload a photo of any object and receive a downloadable
-        3D mesh — OBJ &amp; GLB — ready for Blender, OpenGL, or 3D printing.
-      </p>
+  <!-- ─────────────────────────────────────────────────────────────────────
+       Header
+       ───────────────────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <!-- Cube icon -->
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M9 2L16 5.5V12.5L9 16L2 12.5V5.5L9 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M9 2V16M2 5.5L9 9L16 5.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Photo → 3D Mesh</h1>
+        <p class="tagline">Depth estimation &nbsp;·&nbsp; OBJ &amp; GLB export</p>
+      </div>
     </div>
   </header>
 
-  <!-- ── How it works ─────────────────────────────────────────────────────── -->
-  <section class="workflow" aria-label="How it works">
+  <!-- ─────────────────────────────────────────────────────────────────────
+       Workflow strip
+       ───────────────────────────────────────────────────────────────────── -->
+  <div class="workflow-strip">
 
-    <div class="step-card">
-      <div class="step-visual step-photo"></div>
-      <span class="step-num">1</span>
-      <strong>Take a photo</strong>
-      <p>Plain background, good lighting, object centred and in focus</p>
+    <div class="wf-step">
+      <div class="wf-icon">
+        <!-- Camera -->
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="8" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5.5 4L6.8 2h2.4L10.5 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="wf-body">
+        <span class="wf-n">01</span>
+        <span class="wf-label">Photograph</span>
+      </div>
     </div>
 
-    <div class="step-arrow" aria-hidden="true">›</div>
+    <div class="wf-divider"></div>
 
-    <div class="step-card">
-      <div class="step-visual step-depth"></div>
-      <span class="step-num">2</span>
-      <strong>AI reads depth</strong>
-      <p>TensorFlow.js estimates per-pixel distance to build a depth map</p>
+    <div class="wf-step">
+      <div class="wf-icon">
+        <!-- Depth / layers -->
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 5L8 2L14 5L8 8L2 5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M2 9L8 12L14 9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="wf-body">
+        <span class="wf-n">02</span>
+        <span class="wf-label">Depth analysis</span>
+      </div>
     </div>
 
-    <div class="step-arrow" aria-hidden="true">›</div>
+    <div class="wf-divider"></div>
 
-    <div class="step-card">
-      <div class="step-visual step-mesh"></div>
-      <span class="step-num">3</span>
-      <strong>Get your 3D file</strong>
-      <p>Download OBJ or GLB and open it straight in Blender or OpenGL</p>
+    <div class="wf-step">
+      <div class="wf-icon">
+        <!-- Download -->
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 13H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="wf-body">
+        <span class="wf-n">03</span>
+        <span class="wf-label">Download mesh</span>
+      </div>
     </div>
 
-  </section>
-
-  <!-- ── Input controls ───────────────────────────────────────────────────── -->
-  <div class="controls">
-    <label class="btn btn-upload disabled" id="upload-label">
-      📷 Upload Photo
-      <input type="file" id="file-input" accept="image/*">
-    </label>
-    <button class="btn btn-camera" id="cam-btn" disabled>🎥 Use Camera</button>
   </div>
 
-  <!-- ── Status bar ───────────────────────────────────────────────────────── -->
-  <div id="status" class="busy">
-    <span class="spinner" id="spinner"></span>
-    <span id="status-text">Loading depth model…</span>
-  </div>
+  <!-- ─────────────────────────────────────────────────────────────────────
+       Two-column main layout
+       ───────────────────────────────────────────────────────────────────── -->
+  <main class="app-layout">
 
-  <!-- ── 3-D viewer ───────────────────────────────────────────────────────── -->
-  <div class="viewer-wrap">
-    <canvas id="viewer"></canvas>
-    <!-- Badge swaps text when the demo is replaced by a real mesh -->
-    <div class="viewer-badge" id="viewer-badge">Demo — drag to explore · upload a photo to start</div>
-    <div class="orbit-hint" id="orbit-hint">Drag to rotate · Scroll to zoom</div>
-  </div>
+    <!-- ── Left: control panel ─────────────────────────────────────────── -->
+    <aside class="control-panel">
 
-  <!-- ── Limitation note ──────────────────────────────────────────────────── -->
-  <p class="note">
-    ⚠ <strong>Heads up:</strong> this uses AI depth estimation, not full photogrammetry.
-    The output is a <em>depth-displaced plane mesh</em> — single-sided and best for objects
-    photographed straight-on. For highest quality, use a plain background and even lighting.
-  </p>
+      <!-- Input -->
+      <section class="panel-section">
+        <h2 class="section-label">Input</h2>
+        <div class="btn-group">
 
-  <!-- ── Download buttons ─────────────────────────────────────────────────── -->
-  <div class="dl-row">
-    <button class="btn btn-dl" id="dl-obj" disabled>⬇ Download OBJ</button>
-    <button class="btn btn-dl" id="dl-glb" disabled>⬇ Download GLB</button>
-  </div>
+          <label class="btn btn-primary disabled" id="upload-label">
+            <!-- Upload arrow -->
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 11V3M8 3L5 6M8 3L11 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 13H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            Upload Photo
+            <input type="file" id="file-input" accept="image/*">
+          </label>
 
-  <!-- ── Camera capture modal ─────────────────────────────────────────────── -->
+          <button class="btn btn-secondary" id="cam-btn" disabled>
+            <!-- Camera -->
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="8" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M5.5 4L6.8 2h2.4L10.5 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            Use Camera
+          </button>
+
+        </div>
+
+        <div id="status" class="busy">
+          <span class="spinner" id="spinner"></span>
+          <span id="status-text">Loading depth model…</span>
+        </div>
+      </section>
+
+      <hr class="panel-rule">
+
+      <!-- Photo tips -->
+      <section class="panel-section">
+        <h2 class="section-label">Photo tips</h2>
+        <ul class="tip-list">
+          <li class="tip-item">
+            <span class="tip-dot"></span>
+            <div>
+              <strong>Plain background</strong>
+              <p>Solid, uncluttered surface behind the object</p>
+            </div>
+          </li>
+          <li class="tip-item">
+            <span class="tip-dot"></span>
+            <div>
+              <strong>Even lighting</strong>
+              <p>Diffuse window light — avoid harsh shadows</p>
+            </div>
+          </li>
+          <li class="tip-item">
+            <span class="tip-dot"></span>
+            <div>
+              <strong>Fill the frame</strong>
+              <p>Object should dominate the composition</p>
+            </div>
+          </li>
+          <li class="tip-item">
+            <span class="tip-dot"></span>
+            <div>
+              <strong>Head-on angle</strong>
+              <p>Face the object directly for best depth accuracy</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <hr class="panel-rule">
+
+      <!-- Export -->
+      <section class="panel-section">
+        <h2 class="section-label">Export</h2>
+        <div class="dl-group">
+          <button class="btn btn-dl" id="dl-obj" disabled>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 11V3M8 11L5 8M8 11L11 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 14H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            Download OBJ
+          </button>
+          <button class="btn btn-dl" id="dl-glb" disabled>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 11V3M8 11L5 8M8 11L11 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 14H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            Download GLB
+          </button>
+        </div>
+        <p class="export-caption">OBJ — geometry only &nbsp;·&nbsp; GLB — geometry + texture</p>
+      </section>
+
+    </aside>
+
+    <!-- ── Right: 3D viewer ─────────────────────────────────────────────── -->
+    <div class="viewer-col">
+      <div class="viewer-wrap">
+        <canvas id="viewer"></canvas>
+        <div class="viewer-badge" id="viewer-badge">Demo object — drag to explore</div>
+        <div class="orbit-hint" id="orbit-hint">Drag to rotate &nbsp;·&nbsp; Scroll to zoom</div>
+      </div>
+      <p class="limitation-note">
+        ⚠&nbsp; <strong>Heads up:</strong> output is a depth-displaced plane mesh, not full
+        photogrammetry — single-sided, best for objects photographed straight-on.
+      </p>
+    </div>
+
+  </main>
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       Camera capture modal
+       ───────────────────────────────────────────────────────────────────── -->
   <div id="cam-modal">
     <video id="cam-video" autoplay playsinline muted></video>
     <div class="cam-btns">
@@ -114,10 +225,7 @@
     </div>
   </div>
 
-  <!-- Off-screen canvas used by depth.js for image processing -->
   <canvas id="proc-canvas"></canvas>
-
-  <!-- Entry point — deferred until DOM + CDN scripts are ready -->
   <script type="module" src="js/main.js"></script>
 
 </body>
