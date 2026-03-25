@@ -30,7 +30,7 @@ export async function loadDepthAnything() {
 
   depthPipeline = await pipeline(
     'depth-estimation',
-    'depth-anything/depth-anything-v2-small-hf',
+    'onnx-community/depth-anything-v2-small-hf',
     { dtype: 'fp32' },          // fp32 for maximum compatibility across browsers
   );
 }
