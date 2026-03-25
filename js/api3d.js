@@ -15,15 +15,15 @@
 const TRIPO_ORIGIN = 'https://api.tripo3d.ai';
 const API_PATH     = '/v2/openapi';
 
-// Use a CORS proxy when running from a browser (Tripo's API does not send
-// Access-Control-Allow-Origin headers, so direct browser→API calls are blocked).
-// Set window.TRIPO_PROXY_URL to your own proxy if you have one (e.g. a
-// Cloudflare Worker or local Express server).  The default uses the public
-// allorigins service as a lightweight fallback.
+// Tripo's API does not send CORS headers, so direct browser→API calls are
+// blocked.  A CORS proxy is required.  Set window.TRIPO_PROXY_URL to your
+// Cloudflare Worker URL (see worker.js) or run the local Node proxy.
 function getBase() {
   if (typeof window !== 'undefined' && window.TRIPO_PROXY_URL) {
     return window.TRIPO_PROXY_URL;
   }
+  // Direct calls will be blocked by CORS on hosted sites — still attempt
+  // so the error handler can give a clear message.
   return `${TRIPO_ORIGIN}${API_PATH}`;
 }
 
@@ -152,12 +152,11 @@ async function tripoFetch(apiKey, method, path, body) {
     });
   } catch (networkErr) {
     // fetch() itself throws on network/CORS errors — surface this clearly
-    throw new Error(
-      `Network error calling Tripo API (${method} ${path}). ` +
-      `This is usually a CORS issue — the browser blocks direct API calls. ` +
-      `Set window.TRIPO_PROXY_URL to a CORS proxy, or run a local proxy server. ` +
-      `(${networkErr.message})`
-    );
+    const hasProxy = typeof window !== 'undefined' && window.TRIPO_PROXY_URL;
+    const hint = hasProxy
+      ? `Your proxy (${window.TRIPO_PROXY_URL}) is unreachable. If running locally, start it with: node proxy.js`
+      : `No CORS proxy configured. Deploy worker.js to Cloudflare Workers (free) and set window.TRIPO_PROXY_URL in index.html.`;
+    throw new Error(`Network error (${method} ${path}): ${hint} (${networkErr.message})`);
   }
 
   let json;

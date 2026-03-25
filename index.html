@@ -284,9 +284,20 @@
 
   <canvas id="proc-canvas"></canvas>
 
-  <!-- Point API calls at the local CORS proxy (run: node proxy.js) -->
+  <!--
+    CORS proxy for the Tripo 3D API.
+    Deploy worker.js to Cloudflare Workers (free) and paste your URL below.
+    See worker.js for instructions.
+  -->
   <script>
-    window.TRIPO_PROXY_URL = 'http://localhost:3001/v2/openapi';
+    // ── Set your Cloudflare Worker URL here ──────────────────────────────
+    // Example: "https://tripo-proxy.your-subdomain.workers.dev/v2/openapi"
+    window.TRIPO_PROXY_URL = 'https://tripo-proxy.danyvalencia25.workers.dev/';
+
+    // Auto-detect: if running locally, try the Node proxy on port 3001
+    if (!window.TRIPO_PROXY_URL && location.hostname === 'localhost') {
+      window.TRIPO_PROXY_URL = 'http://localhost:3001/v2/openapi';
+    }
   </script>
 
   <script type="module" src="js/main.js"></script>
