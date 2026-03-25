@@ -98,10 +98,10 @@ function switchMode(mode) {
   });
 
   const isApi = mode === 'api';
-  inputSection.style.display      = isApi ? 'none'  : '';
+  inputSection.classList.toggle('mode-hidden', isApi);
   apiKeySection.classList.toggle('visible', isApi);
   photoQueueSection.classList.toggle('visible', isApi);
-  tipMultiview.style.display      = isApi ? '' : 'none';
+  tipMultiview.style.display = isApi ? '' : 'none';
 
   // Limitation note changes per mode
   limitationNote.innerHTML = isApi

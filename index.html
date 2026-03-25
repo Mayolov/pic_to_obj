@@ -101,11 +101,33 @@
     <!-- ── Left: control panel ─────────────────────────────────────────── -->
     <aside class="control-panel">
 
-      <!-- Mode tabs -->
+      <!-- Mode selector -->
       <div class="mode-tabs" role="tablist" aria-label="3D generation mode">
-        <button class="mode-tab active" id="mode-basic"    role="tab" aria-selected="true">Basic</button>
-        <button class="mode-tab"        id="mode-enhanced" role="tab" aria-selected="false">Enhanced</button>
-        <button class="mode-tab"        id="mode-api"      role="tab" aria-selected="false">Full 3D</button>
+        <p class="mode-tabs-label">Generation mode</p>
+
+        <button class="mode-tab active" id="mode-basic" role="tab" aria-selected="true">
+          <span class="mode-tab-dot"></span>
+          <span class="mode-tab-text">
+            <span class="mode-tab-name">Basic</span>
+            <span class="mode-tab-desc">Fast depth estimation, no download</span>
+          </span>
+        </button>
+
+        <button class="mode-tab" id="mode-enhanced" role="tab" aria-selected="false">
+          <span class="mode-tab-dot"></span>
+          <span class="mode-tab-text">
+            <span class="mode-tab-name">Enhanced</span>
+            <span class="mode-tab-desc">Depth Anything V2 — better quality</span>
+          </span>
+        </button>
+
+        <button class="mode-tab" id="mode-api" role="tab" aria-selected="false">
+          <span class="mode-tab-dot"></span>
+          <span class="mode-tab-text">
+            <span class="mode-tab-name">Full 3D</span>
+            <span class="mode-tab-desc">Tripo AI — real multi-view model</span>
+          </span>
+        </button>
       </div>
 
       <!-- Input  (Modes 1 & 2) -->
