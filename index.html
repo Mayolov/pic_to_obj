@@ -283,6 +283,12 @@
   </div>
 
   <canvas id="proc-canvas"></canvas>
+
+  <!-- Point API calls at the local CORS proxy (run: node proxy.js) -->
+  <script>
+    window.TRIPO_PROXY_URL = 'http://localhost:3001/v2/openapi';
+  </script>
+
   <script type="module" src="js/main.js"></script>
 
 </body>

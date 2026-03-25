@@ -217,9 +217,9 @@ h1 {
   min-height: 1.4em;
   color: var(--text-3);
 }
-#status.busy  { color: var(--amber); }
-#status.ready { color: var(--green); }
-#status.err   { color: var(--red);   }
+#status.busy,  #api-status.busy  { color: var(--amber); }
+#status.ready, #api-status.ready { color: var(--green); }
+#status.err,   #api-status.err   { color: var(--red);   }
 
 .spinner {
   flex-shrink: 0;

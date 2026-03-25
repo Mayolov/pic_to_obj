@@ -12,7 +12,21 @@
  * Get a key at https://platform.tripo3d.ai
  */
 
-const BASE  = 'https://api.tripo3d.ai/v2/openapi';
+const TRIPO_ORIGIN = 'https://api.tripo3d.ai';
+const API_PATH     = '/v2/openapi';
+
+// Use a CORS proxy when running from a browser (Tripo's API does not send
+// Access-Control-Allow-Origin headers, so direct browser→API calls are blocked).
+// Set window.TRIPO_PROXY_URL to your own proxy if you have one (e.g. a
+// Cloudflare Worker or local Express server).  The default uses the public
+// allorigins service as a lightweight fallback.
+function getBase() {
+  if (typeof window !== 'undefined' && window.TRIPO_PROXY_URL) {
+    return window.TRIPO_PROXY_URL;
+  }
+  return `${TRIPO_ORIGIN}${API_PATH}`;
+}
+
 const POLL_MS = 2500;   // poll interval
 
 // Positional hints sent for multi-view tasks (up to 5 photos)
@@ -123,16 +137,36 @@ async function pollUntilDone(apiKey, taskId, onProgress) {
 
 async function tripoFetch(apiKey, method, path, body) {
   const isForm = body instanceof FormData;
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
-    },
-    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-  });
+  const url    = `${getBase()}${path}`;
 
-  const json = await res.json().catch(() => ({}));
+  let res;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        // Only set Content-Type for non-FormData, non-GET requests
+        ...(!isForm && method !== 'GET' ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+    });
+  } catch (networkErr) {
+    // fetch() itself throws on network/CORS errors — surface this clearly
+    throw new Error(
+      `Network error calling Tripo API (${method} ${path}). ` +
+      `This is usually a CORS issue — the browser blocks direct API calls. ` +
+      `Set window.TRIPO_PROXY_URL to a CORS proxy, or run a local proxy server. ` +
+      `(${networkErr.message})`
+    );
+  }
+
+  let json;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(`Tripo API returned non-JSON response (HTTP ${res.status}). Check your API key and proxy URL.`);
+  }
+
   if (!res.ok || json.code !== 0) {
     const msg = json.message ?? json.error ?? `HTTP ${res.status}`;
     throw new Error(`Tripo API error: ${msg}`);

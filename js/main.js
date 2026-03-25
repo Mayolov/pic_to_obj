@@ -400,6 +400,7 @@ function setStatus(msg, type = 'busy') {
 
 function setInputsEnabled(enabled) {
   camBtn.disabled = !enabled;
+  fileInput.disabled = !enabled;
   uploadLabel.classList.toggle('disabled', !enabled);
 }
 
