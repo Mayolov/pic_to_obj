@@ -10,6 +10,11 @@
  *        window.TRIPO_PROXY_URL = "https://tripo-proxy.<you>.workers.dev/v2/openapi";
  *
  * Only requests from ALLOWED_ORIGINS are accepted — all others get 403.
+ *
+ * Routes:
+ *   /v2/openapi/*   → forwarded to https://api.tripo3d.ai/v2/openapi/*
+ *   /proxy?url=URL  → fetches URL and returns it with CORS headers
+ *                     (used to download GLB models from Tripo's CDN)
  */
 
 const TRIPO = 'https://api.tripo3d.ai';
@@ -61,8 +66,21 @@ export default {
       });
     }
 
-    // ── Forward to Tripo ─────────────────────────────────────────────────
     const url = new URL(request.url);
+
+    // ── /proxy?url=<encoded-url>  — pass-through for CDN downloads ───────
+    if (url.pathname === '/proxy') {
+      const targetUrl = url.searchParams.get('url');
+      if (!targetUrl) {
+        return new Response(
+          JSON.stringify({ error: 'Missing ?url= parameter' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } },
+        );
+      }
+      return proxyRequest(targetUrl, request, origin);
+    }
+
+    // ── /v2/openapi/* — forward to Tripo API ─────────────────────────────
     const tripoUrl = TRIPO + url.pathname + url.search;
 
     const headers = new Headers(request.headers);
@@ -70,34 +88,42 @@ export default {
     headers.delete('Origin');
     headers.delete('Referer');
 
-    try {
-      const tripoRes = await fetch(tripoUrl, {
-        method: request.method,
-        headers: headers,
-        body: request.method !== 'GET' && request.method !== 'HEAD'
-          ? request.body
-          : undefined,
-      });
-
-      const response = new Response(tripoRes.body, {
-        status: tripoRes.status,
-        statusText: tripoRes.statusText,
-        headers: tripoRes.headers,
-      });
-
-      for (const [k, v] of Object.entries(corsHeaders(origin))) {
-        response.headers.set(k, v);
-      }
-
-      return response;
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
-      });
-    }
+    return proxyRequest(tripoUrl, request, origin, headers);
   },
 };
+
+async function proxyRequest(targetUrl, request, origin, headers) {
+  if (!headers) {
+    headers = new Headers();
+  }
+
+  try {
+    const res = await fetch(targetUrl, {
+      method: request.method,
+      headers: headers,
+      body: request.method !== 'GET' && request.method !== 'HEAD'
+        ? request.body
+        : undefined,
+    });
+
+    const response = new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+    });
+
+    for (const [k, v] of Object.entries(corsHeaders(origin))) {
+      response.headers.set(k, v);
+    }
+
+    return response;
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+    });
+  }
+}
 
 function corsHeaders(origin) {
   return {

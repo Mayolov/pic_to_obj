@@ -61,7 +61,15 @@ export async function generateFromImages(apiKey, imageFiles, onProgress) {
 
   // ── Step 4: Download GLB ──────────────────────────────────────────────────
   onProgress('Downloading model…', 95);
-  const response = await fetch(modelUrl);
+  // The model URL points to Tripo's CDN which also blocks CORS.
+  // Route it through the worker's /proxy?url= endpoint.
+  let dlUrl = modelUrl;
+  const proxyBase = getBase();
+  if (proxyBase !== `${TRIPO_ORIGIN}${API_PATH}`) {
+    const workerOrigin = proxyBase.replace(/\/v2\/openapi\/?$/, '');
+    dlUrl = `${workerOrigin}/proxy?url=${encodeURIComponent(modelUrl)}`;
+  }
+  const response = await fetch(dlUrl);
   if (!response.ok) throw new Error(`Model download failed: ${response.status}`);
   const blob = await response.blob();
 
@@ -115,7 +123,9 @@ async function pollUntilDone(apiKey, taskId, onProgress) {
     const res    = await tripoFetch(apiKey, 'GET', `/task/${taskId}`);
     const task   = res.data;
     const status = task.status;
-    const pct    = status === 'running' ? Math.min(30 + Math.round((task.progress ?? 0) * 0.6), 90) : 30;
+    // task.progress is already a percentage (0–100), not a fraction
+    const progress = task.progress ?? 0;
+    const pct      = status === 'running' ? Math.min(30 + Math.round(progress * 0.6), 90) : 30;
 
     if (status === 'success') {
       const url = task.output?.model ?? task.output?.pbr_model ?? task.output?.base_model;
@@ -128,7 +138,7 @@ async function pollUntilDone(apiKey, taskId, onProgress) {
     }
 
     // still queued / running
-    const label = status === 'queued' ? 'Queued — waiting for GPU…' : `Processing… ${Math.round((task.progress ?? 0) * 100)}%`;
+    const label = status === 'queued' ? 'Queued — waiting for GPU…' : `Processing… ${Math.round(progress)}%`;
     onProgress(label, pct);
   }
 
