@@ -65,7 +65,7 @@ export async function estimateDepthAnything(imgEl, procCanvas) {
   const dims = tensor.dims ?? tensor.shape;
   const h    = dims[dims.length - 2];
   const w    = dims[dims.length - 1];
-  const raw  = await tensor.data();   // Float32Array, row-major top→bottom
+  const raw  = tensor.data;            // Float32Array, row-major top→bottom (v3: synchronous property)
 
   // ── 3. Normalise to [0, 1] ────────────────────────────────────────────────
   let min = Infinity, max = -Infinity;
